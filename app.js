@@ -47,6 +47,7 @@
     const viewMode = document.getElementById("view-mode");
     const roomViewWrap = document.getElementById("room-view-wrap");
     const viewRoom = document.getElementById("view-room");
+    const exportCsvBtn = document.getElementById("export-csv-btn");
     const exportPdfBtn = document.getElementById("export-pdf-btn");
 
     const scheduleOutput = document.getElementById("schedule-output");
@@ -1530,6 +1531,113 @@ th{background:#f3f4f6}
       popup.print();
     }
 
+    function escapeCsvCell(value) {
+      const raw = String(value ?? "");
+      if (!/[;"\n\r,]/.test(raw)) return raw;
+      return `"${raw.replace(/"/g, "\"\"")}"`;
+    }
+
+    function downloadCsv(filename, rows) {
+      const csvContent = rows.map((row) => row.map(escapeCsvCell).join(";")).join("\r\n");
+      const blob = new Blob([`\uFEFF${csvContent}`], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function currentGlobalDayGroups() {
+      const dayGroups = [];
+      for (const day of Object.keys(dayOrder).sort((a, b) => dayOrder[a] - dayOrder[b])) {
+        const uniqByTime = new Map();
+        for (const slot of state.slots) {
+          if (slot.day !== day) continue;
+          const key = `${slot.start}-${slot.end}`;
+          if (!uniqByTime.has(key)) uniqByTime.set(key, { day, start: slot.start, end: slot.end });
+        }
+        const lessons = Array.from(uniqByTime.values()).sort((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end));
+        if (lessons.length) dayGroups.push({ day, lessons });
+      }
+      return dayGroups;
+    }
+
+    function exportScheduleCsv() {
+      if (!state.schedule || !state.lessonInstances.length) {
+        setStatus("Gere o cronograma antes de exportar CSV.", "error");
+        return;
+      }
+
+      const stamp = new Date().toISOString().slice(0, 10);
+      const slotById = new Map(state.slots.map((slot) => [slot.id, slot]));
+      const rows = [];
+
+      if (viewMode.value === "room") {
+        const roomId = viewRoom.value || state.rooms[0]?.id;
+        const room = state.rooms.find((r) => r.id === roomId);
+        if (!room) {
+          setStatus("Selecione uma sala válida para exportar CSV.", "error");
+          return;
+        }
+
+        rows.push(["Horário por Sala", room.name, "", ""]);
+        rows.push(["Dia", "Aula", "Horário", "Professor"]);
+        const grouped = groupedSlotsByDay()
+          .map((g) => ({ day: g.day, slots: g.slots.filter((s) => s.roomId === room.id) }))
+          .filter((g) => g.slots.length);
+
+        for (const group of grouped) {
+          for (let i = 0; i < group.slots.length; i++) {
+            const slot = group.slots[i];
+            const teacherName = state.schedule[room.id]?.[slot.id]?.teacherName || "Livre";
+            rows.push([group.day, String(i + 1), `${slot.start}-${slot.end}`, teacherName]);
+          }
+        }
+
+        downloadCsv(`horario-sala-${room.name}-${stamp}.csv`, rows);
+        setStatus("CSV da sala exportado com sucesso.", "ok");
+        return;
+      }
+
+      const dayGroups = currentGlobalDayGroups();
+      const header = ["Professor"];
+      for (const group of dayGroups) {
+        for (let i = 0; i < group.lessons.length; i++) {
+          const lesson = group.lessons[i];
+          header.push(`${group.day} Aula ${i + 1} (${lesson.start}-${lesson.end})`);
+        }
+      }
+      rows.push(header);
+
+      const lessonsByTeacherAndTime = new Map();
+      for (const lesson of state.lessonInstances) {
+        if (!lesson.slotId) continue;
+        const slot = slotById.get(lesson.slotId);
+        if (!slot) continue;
+        const key = `${lesson.teacherId}@@${slot.day}@@${slot.start}@@${slot.end}`;
+        if (!lessonsByTeacherAndTime.has(key)) lessonsByTeacherAndTime.set(key, []);
+        lessonsByTeacherAndTime.get(key).push(lesson.roomName);
+      }
+
+      for (const teacher of state.teachers) {
+        const row = [teacher.name];
+        for (const group of dayGroups) {
+          for (const lessonTime of group.lessons) {
+            const key = `${teacher.id}@@${lessonTime.day}@@${lessonTime.start}@@${lessonTime.end}`;
+            const rooms = lessonsByTeacherAndTime.get(key) || [];
+            row.push(rooms.length ? rooms.join(" | ") : "Livre");
+          }
+        }
+        rows.push(row);
+      }
+
+      downloadCsv(`horario-escola-${stamp}.csv`, rows);
+      setStatus("CSV da grade escolar exportado com sucesso.", "ok");
+    }
+
     function renderAll() {
       normalizeRoomData();
       normalizeLessonInstances();
@@ -1952,6 +2060,7 @@ th{background:#f3f4f6}
     });
 
     exportPdfBtn.addEventListener("click", exportSchedulePdf);
+    exportCsvBtn.addEventListener("click", exportScheduleCsv);
 
     loadState();
     renderAll();

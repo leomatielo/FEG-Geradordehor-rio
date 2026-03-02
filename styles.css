@@ -374,7 +374,7 @@
     .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-    .toolbar { grid-template-columns: minmax(170px, 1fr) minmax(170px, 1fr) auto auto; }
+    .toolbar { grid-template-columns: minmax(170px, 1fr) minmax(170px, 1fr) auto auto auto; }
     .slot-picker { grid-template-columns: minmax(0, 1fr) auto; }
 
     label {
