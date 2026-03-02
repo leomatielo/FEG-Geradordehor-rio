@@ -1603,14 +1603,17 @@ th{background:#f3f4f6}
       }
 
       const dayGroups = currentGlobalDayGroups();
-      const header = ["Professor"];
+      const dayHeader = ["Professor"];
+      const lessonHeader = [""];
       for (const group of dayGroups) {
         for (let i = 0; i < group.lessons.length; i++) {
           const lesson = group.lessons[i];
-          header.push(`${group.day} Aula ${i + 1} (${lesson.start}-${lesson.end})`);
+          dayHeader.push(i === 0 ? group.day : "");
+          lessonHeader.push(`Aula ${i + 1} (${lesson.start}-${lesson.end})`);
         }
       }
-      rows.push(header);
+      rows.push(dayHeader);
+      rows.push(lessonHeader);
 
       const lessonsByTeacherAndTime = new Map();
       for (const lesson of state.lessonInstances) {
