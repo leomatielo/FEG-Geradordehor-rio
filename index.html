@@ -1,0 +1,327 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gerador de Horário Escolar - Fundação Educacional Guaçuana 2026</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <input id="sidebar-toggle" type="checkbox" />
+
+  <header class="app-header">
+    <div class="brand">
+      <div class="brand-mark">GHE</div>
+      <div class="brand-text">
+        <h1>Gerador de Horário Escolar - Fundação Educacional Guaçuana 2026</h1>
+        <p>Planejamento acadêmico inteligente para operação escolar</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="clear-all-btn" type="button" class="btn-outline">Limpar dados</button>
+      <label class="sidebar-toggle-btn" for="sidebar-toggle" aria-label="Abrir menu de configurações">☰</label>
+    </div>
+  </header>
+
+  <div class="shell">
+    <aside class="sidebar">
+      <section class="sidebar-section">
+        <!-- UX: stepper fixo para reduzir carga cognitiva do processo em múltiplas etapas -->
+        <div class="stepper">
+          <h2>Etapas do Fluxo</h2>
+          <ol class="stepper-list">
+            <li class="stepper-item">
+              <span class="step-index">1</span>
+              <div class="step-copy"><strong>Configurar salas</strong>Base da distribuição das aulas</div>
+            </li>
+            <li class="stepper-item">
+              <span class="step-index">2</span>
+              <div class="step-copy"><strong>Definir horários</strong>Janelas disponíveis por dia</div>
+            </li>
+            <li class="stepper-item">
+              <span class="step-index">3</span>
+              <div class="step-copy"><strong>Cadastrar professores</strong>Equipe docente da escola</div>
+            </li>
+            <li class="stepper-item">
+              <span class="step-index">4</span>
+              <div class="step-copy"><strong>Carga e bloqueios</strong>Regras de alocação</div>
+            </li>
+            <li class="stepper-item">
+              <span class="step-index">5</span>
+              <div class="step-copy"><strong>Executar geração</strong>Montagem automática da grade</div>
+            </li>
+          </ol>
+        </div>
+
+        <section class="panel" id="config-salas">
+          <h3>Salas</h3>
+          <p class="panel-subtitle">Cadastre todas as turmas/salas disponíveis no período.</p>
+          <form id="room-form">
+            <label>
+              Sala (2 caracteres: número + letra)
+              <input id="room-name" type="text" placeholder="Ex.: 1A" maxlength="2" required />
+            </label>
+            <button type="submit">Adicionar sala</button>
+          </form>
+          <div class="slot-picker">
+            <label>
+              Salas cadastradas
+              <select id="room-list"></select>
+            </label>
+            <button id="remove-room-btn" type="button" class="btn-outline">Remover sala</button>
+          </div>
+        </section>
+
+        <section class="panel" id="config-horarios">
+          <h3>Horários</h3>
+          <p class="panel-subtitle">Crie horários manualmente ou em lote.</p>
+
+          <p class="muted">Cadastro manual</p>
+          <form id="slot-form">
+            <div class="grid-3">
+              <label>
+                Série/Sala
+                <select id="slot-room" required></select>
+              </label>
+              <label>
+                Dia da semana
+                <select id="slot-day" required>
+                  <option value="Segunda">Segunda</option>
+                  <option value="Terça">Terça</option>
+                  <option value="Quarta">Quarta</option>
+                  <option value="Quinta">Quinta</option>
+                  <option value="Sexta">Sexta</option>
+                  <option value="Sábado">Sábado</option>
+                </select>
+              </label>
+              <label>
+                Início
+                <input id="slot-start" type="time" required />
+              </label>
+            </div>
+            <label>
+              Fim
+              <input id="slot-end" type="time" required />
+            </label>
+            <button type="submit">Adicionar horário</button>
+          </form>
+
+          <p class="muted">Cadastro em lote</p>
+          <form id="slot-batch-form">
+            <p class="muted">Aplicação automática para todas as salas cadastradas.</p>
+            <div class="days">
+              <label class="day"><input type="checkbox" name="slot-batch-day" value="Segunda" />Segunda</label>
+              <label class="day"><input type="checkbox" name="slot-batch-day" value="Terça" />Terça</label>
+              <label class="day"><input type="checkbox" name="slot-batch-day" value="Quarta" />Quarta</label>
+              <label class="day"><input type="checkbox" name="slot-batch-day" value="Quinta" />Quinta</label>
+              <label class="day"><input type="checkbox" name="slot-batch-day" value="Sexta" />Sexta</label>
+              <label class="day"><input type="checkbox" name="slot-batch-day" value="Sábado" />Sábado</label>
+            </div>
+
+            <div class="grid-3">
+              <label>
+                Início da 1a aula
+                <input id="slot-batch-start" type="time" required />
+              </label>
+              <label>
+                Duração (min)
+                <input id="slot-batch-duration" type="number" min="1" step="1" value="50" required />
+              </label>
+              <label>
+                Troca entre aulas (min)
+                <input id="slot-batch-break" type="number" min="0" step="1" value="10" required />
+              </label>
+            </div>
+
+            <div class="grid-2">
+              <label>
+                Início do intervalo (opcional)
+                <input id="slot-batch-recess-start" type="time" />
+              </label>
+              <label>
+                Fim do intervalo (opcional)
+                <input id="slot-batch-recess-end" type="time" />
+              </label>
+            </div>
+
+            <label>
+              Quantidade de aulas por dia
+              <input id="slot-batch-count" type="number" min="1" step="1" value="7" required />
+            </label>
+
+            <button type="submit">Adicionar horários em lote</button>
+          </form>
+
+          <div class="slot-picker">
+            <label>
+              Horários cadastrados
+              <select id="slot-select"></select>
+            </label>
+            <button id="remove-slot-btn" type="button" class="btn-outline">Remover horário</button>
+          </div>
+        </section>
+
+        <section class="panel" id="config-professores">
+          <h3>Professores</h3>
+          <p class="panel-subtitle">Registre os docentes para distribuição de aulas.</p>
+          <form id="teacher-form">
+            <label>
+              Nome do professor
+              <input id="teacher-name" type="text" placeholder="Ex.: Maria Souza" required />
+            </label>
+            <button type="submit">Adicionar professor</button>
+          </form>
+          <div class="slot-picker">
+            <label>
+              Professores cadastrados
+              <select id="teacher-list"></select>
+            </label>
+            <button id="remove-teacher-btn" type="button" class="btn-outline">Remover professor</button>
+          </div>
+        </section>
+
+        <section class="panel" id="config-carga">
+          <h3>Carga e Bloqueios</h3>
+          <p class="panel-subtitle">Defina quantidades por sala e indisponibilidades.</p>
+
+          <p class="muted">Carga por professor e sala</p>
+          <form id="load-form">
+            <div class="grid-3">
+              <label>
+                Professor
+                <select id="load-teacher" required></select>
+              </label>
+              <label>
+                Sala
+                <select id="load-room" required></select>
+              </label>
+              <label>
+                Quantidade
+                <input id="load-qty" type="number" min="1" step="1" value="1" required />
+              </label>
+            </div>
+            <button type="submit">Adicionar/Atualizar carga</button>
+          </form>
+          <ul id="load-list" class="list"></ul>
+
+          <p class="muted">Bloqueio de disponibilidade do professor.</p>
+          <form id="block-form">
+            <div class="grid-4">
+              <label>
+                Professor
+                <select id="block-teacher" required></select>
+              </label>
+              <label>
+                Dia
+                <select id="block-day" required>
+                  <option value="Segunda">Segunda</option>
+                  <option value="Terça">Terça</option>
+                  <option value="Quarta">Quarta</option>
+                  <option value="Quinta">Quinta</option>
+                  <option value="Sexta">Sexta</option>
+                  <option value="Sábado">Sábado</option>
+                </select>
+              </label>
+              <label>
+                Início bloqueio
+                <input id="block-start" type="time" required />
+              </label>
+              <label>
+                Fim bloqueio
+                <input id="block-end" type="time" required />
+              </label>
+            </div>
+            <label class="day">
+              <input id="block-full-day" type="checkbox" />
+              Bloquear dia inteiro
+            </label>
+            <button type="submit">Adicionar bloqueio</button>
+          </form>
+          <ul id="block-list" class="list"></ul>
+        </section>
+      </section>
+    </aside>
+
+    <main class="main-area">
+      <section class="hero">
+        <h2>Monte, valide e visualize seu cronograma em um único fluxo</h2>
+        <p>Organize dados na lateral, execute a montagem automática e acompanhe o resultado da grade em tempo real com uma visualização compacta e pronta para exportação.</p>
+        <div class="flow-steps">
+          <div class="flow-pill"><strong>Configuração</strong>Salas, horários, professores, cargas e regras.</div>
+          <div class="flow-pill"><strong>Execução</strong>Geração automática e limpeza controlada de dados.</div>
+          <div class="flow-pill"><strong>Visualização</strong>Grade global ou por sala com exportação em PDF.</div>
+        </div>
+      </section>
+
+      <section class="workspace-card" id="execucao">
+        <div class="workspace-head">
+          <h2>Execução do Cronograma</h2>
+          <span class="badge">Etapa 5</span>
+        </div>
+        <form id="build-form">
+          <div class="grid-2">
+            <button type="submit">Gerar horário automaticamente</button>
+            <p class="muted">Preferências padrão ativas: evitar janelas, balancear carga e evitar mais de 2 aulas seguidas.</p>
+          </div>
+        </form>
+        <div id="generation-progress" class="progress-card" hidden>
+          <div class="progress-head">
+            <strong id="progress-title">Processando geração</strong>
+            <span id="progress-percent">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="progress-bar" class="progress-bar"></div>
+          </div>
+          <p id="progress-meta" class="muted">Preparando...</p>
+        </div>
+        <div id="status" class="status"></div>
+      </section>
+
+      <section class="workspace-card" id="visualizacao">
+        <div class="workspace-head">
+          <h2>Visualização do Cronograma</h2>
+          <span class="badge">Resultado</span>
+        </div>
+
+        <!-- UX: controles de visualização no topo para alternância rápida sem perder contexto -->
+        <div class="toolbar">
+          <label>
+            Visualização
+            <select id="view-mode">
+              <option value="global">Horário da escola inteira</option>
+              <option value="room">Horário por sala</option>
+            </select>
+          </label>
+          <label id="room-view-wrap" style="display:none;">
+            Sala
+            <select id="view-room"></select>
+          </label>
+          <button id="regenerate-btn" type="button" class="btn-outline">Gerar conforme opções</button>
+          <button id="export-pdf-btn" type="button" class="btn-outline">Exportar PDF</button>
+        </div>
+
+        <div id="schedule-output"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <section class="workspace-card alert-card" id="alertas">
+    <div class="workspace-head">
+      <h2>Alertas de Conflito</h2>
+      <span class="badge">Validação</span>
+    </div>
+    <ul id="alert-list" class="list"></ul>
+  </section>
+
+  <label class="sidebar-overlay" for="sidebar-toggle" aria-hidden="true"></label>
+  <footer class="app-footer">Desenvolvido por Leonardo Matielo</footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
+
