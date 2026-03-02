@@ -1522,6 +1522,7 @@ h1{font-size:18px;margin:0 0 12px}
 table{width:100%;border-collapse:collapse;font-size:12px}
 th,td{border:1px solid #d1d5db;padding:6px;text-align:left;vertical-align:top}
 th{background:#f3f4f6}
+.lesson-chip button{display:none!important}
 </style>
 </head><body><h1>${title}</h1>${table.outerHTML}</body></html>`);
       popup.document.close();
